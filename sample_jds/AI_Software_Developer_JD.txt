@@ -1,0 +1,5 @@
+We are hiring an AI & Software Developer to build full-stack web applications, machine learning models, and computer vision systems. The developer will build real-time detection systems, perform data preprocessing, evaluate ML models, and maintain clean, modular source code.
+
+Responsibilities include designing RESTful backend services, building interactive frontend interfaces, managing databases, implementing NLP/RAG feature extraction, and managing version control.
+
+Required skills & technologies: Python, C, C++, Java, R, JavaScript, React, Node.js, Express.js, MySQL, MongoDB, Machine Learning, Data Preprocessing, Model Evaluation, Scikit-learn, OpenCV, YOLO, MediaPipe, NLP, TF-IDF, RAG, Git, GitHub, and VS Code

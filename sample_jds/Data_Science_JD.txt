@@ -1,0 +1,1 @@
+We are looking for a Data Science Engineer proficient in Python, SQL, Machine Learning, and Pandas. Experience with NLP, Scikit-learn, Docker, and React is required.

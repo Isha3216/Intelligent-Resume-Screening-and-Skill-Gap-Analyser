@@ -101,13 +101,33 @@ def preprocess_and_extract_skills(text: str):
     return clean_text, extracted_skills
 
 
-def calculate_similarity(resume_text: str, jd_text: str) -> float:
-    """Computes TF-IDF vector representations and Cosine Similarity percentage."""
-    vectorizer = TfidfVectorizer()
-    vectors = vectorizer.fit_transform([resume_text, jd_text])
-    similarity_matrix = cosine_similarity(vectors)
-    match_score = similarity_matrix[0][1] * 100
-    return round(match_score, 2)
+def calculate_similarity(candidate_skills: set, required_skills: set, resume_text: str, jd_text: str) -> float:
+    """
+    Computes a hybrid match score:
+    - 75% weight on skill keyword overlap ratio.
+    - 25% weight on full-text TF-IDF cosine similarity.
+    """
+    # 1. Calculate Skill Overlap Score (75% Weight)
+    if not required_skills:
+        skill_score = 100.0
+    else:
+        matched_skills = candidate_skills.intersection(required_skills)
+        skill_score = (len(matched_skills) / len(required_skills)) * 100.0
+
+    # 2. Calculate Text Cosine Similarity Score (25% Weight)
+    text_score = 0.0
+    if resume_text.strip() and jd_text.strip():
+        try:
+            vectorizer = TfidfVectorizer()
+            vectors = vectorizer.fit_transform([resume_text, jd_text])
+            similarity_matrix = cosine_similarity(vectors)
+            text_score = similarity_matrix[0][1] * 100.0
+        except Exception:
+            text_score = skill_score
+
+    # 3. Combine into weighted hybrid score
+    final_score = (0.75 * skill_score) + (0.25 * text_score)
+    return round(final_score, 2)
 
 
 def generate_report_text(results: dict, filename: str) -> str:
@@ -149,8 +169,8 @@ def process_resume_screening(uploaded_file, jd_text: str):
     resume_clean_text, candidate_skills = preprocess_and_extract_skills(resume_raw_text)
     jd_clean_text, required_skills = preprocess_and_extract_skills(jd_text)
     
-    # 3. Vectorization & Match Score Calculation
-    match_score = calculate_similarity(resume_clean_text, jd_clean_text)
+    # 3. Hybrid Match Score Calculation
+    match_score = calculate_similarity(candidate_skills, required_skills, resume_clean_text, jd_clean_text)
     
     # 4. Skill Gap Analysis (Set Difference)
     missing_skills = required_skills - candidate_skills

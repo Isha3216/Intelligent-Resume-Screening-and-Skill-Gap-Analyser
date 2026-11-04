@@ -1,0 +1,5 @@
+Hiring a Senior IT Consultant to manage IT infrastructure, systems administration, network security, and client technology deployment. The role involves disaster recovery planning, web development, cloud hosting, and technical project management.
+
+Responsibilities include configuring operating systems, deploying server software, handling database administration, writing technical SOPs, and optimizing network hardware.
+
+Required skills & technologies: Systems Administration, Network Security, Project Management, Disaster Recovery, Microsoft Windows, Linux, Unix, Mac, AWS, MS Exchange, SharePoint, HTML5, CSS, PHP, JavaScript, Java, C++, MySQL, MS SQL, Cisco, and Information Security.
