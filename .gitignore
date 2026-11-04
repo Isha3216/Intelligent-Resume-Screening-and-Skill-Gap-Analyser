@@ -2,3 +2,6 @@ venv/
 .venv/
 __pycache__/
 *.pyc
+# Exclude test resume files
+sample_resumes/*
+!sample_resumes/.gitkeep

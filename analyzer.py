@@ -1,4 +1,5 @@
 import pdfplumber
+import docx
 import spacy
 from spacy.matcher import PhraseMatcher
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -12,12 +13,35 @@ except OSError:
     download("en_core_web_sm")
     nlp = spacy.load("en_core_web_sm")
 
-# Technical Skill Dictionary for PhraseMatcher
+# Expanded Technical Skill Dictionary organized by domain
 SKILLS_DB = [
-    "python", "java", "c++", "c", "sql", "machine learning", "data science", 
-    "react", "node.js", "mongodb", "aws", "docker", "git", "nlp", 
-    "computer vision", "opencv", "scikit-learn", "pandas", "numpy", "r",
-    "html", "css", "javascript", "express.js", "tailored", "deep learning"
+    # Programming Languages
+    "python", "java", "c++", "c", "c#", "r", "javascript", "typescript", 
+    "go", "rust", "php", "ruby", "kotlin", "swift", "sql", "html", "css",
+
+    # Artificial Intelligence, Data Science & ML
+    "machine learning", "deep learning", "data science", "nlp", 
+    "natural language processing", "computer vision", "opencv", "scikit-learn", 
+    "tensorflow", "pytorch", "keras", "pandas", "numpy", "scipy", "matplotlib", 
+    "seaborn", "rag", "retrieval-augmented generation", "tf-idf", "yolo", 
+    "mediapipe", "reinforcement learning", "bert", "transformers",
+
+    # Web Development & Frameworks
+    "react", "react.js", "node.js", "express.js", "express", "angular", 
+    "vue.js", "django", "flask", "fastapi", "bootstrap", "tailwind", 
+    "tailwind css", "rest api", "graphql", "next.js",
+
+    # Databases & Storage
+    "mongodb", "mysql", "postgresql", "postgres", "sqlite", "oracle", 
+    "redis", "firebase", "cassandra", "dynamodb",
+
+    # Cloud, DevOps & Tools
+    "aws", "azure", "gcp", "google cloud", "docker", "kubernetes", "git", 
+    "github", "vs code", "linux", "unix", "ci/cd", "jenkins", "terraform",
+
+    # Core Computer Science & Concepts
+    "data structures", "algorithms", "object-oriented programming", "oop", 
+    "system design", "cryptography", "software engineering", "agile", "scrum"
 ]
 
 # Initialize PhraseMatcher with skill patterns
@@ -35,6 +59,24 @@ def extract_text_from_pdf(uploaded_file) -> str:
             if extracted:
                 text += extracted + "\n"
     return text
+
+
+def extract_text_from_docx(uploaded_file) -> str:
+    """Extracts raw text lines from uploaded DOCX resume using python-docx."""
+    doc = docx.Document(uploaded_file)
+    text = "\n".join([paragraph.text for paragraph in doc.paragraphs if paragraph.text])
+    return text
+
+
+def extract_text_from_file(uploaded_file) -> str:
+    """Routes uploaded file to the appropriate parser based on file extension."""
+    filename = uploaded_file.name.lower()
+    if filename.endswith(".pdf"):
+        return extract_text_from_pdf(uploaded_file)
+    elif filename.endswith(".docx"):
+        return extract_text_from_docx(uploaded_file)
+    else:
+        raise ValueError("Unsupported file format. Please upload a PDF or DOCX file.")
 
 
 def preprocess_and_extract_skills(text: str):
@@ -68,10 +110,40 @@ def calculate_similarity(resume_text: str, jd_text: str) -> float:
     return round(match_score, 2)
 
 
-def process_resume_screening(uploaded_pdf, jd_text: str):
+def generate_report_text(results: dict, filename: str) -> str:
+    """Generates a plain-text report summarizing screening results."""
+    report = "==================================================\n"
+    report += " RESUME SCREENING & SKILL GAP ANALYSIS REPORT\n"
+    report += "==================================================\n\n"
+    report += f"Candidate File: {filename}\n"
+    report += f"Contextual Match Score: {results['match_score']}%\n\n"
+    
+    report += f"--------------------------------------------------\n"
+    report += f"EXTRACTED CANDIDATE SKILLS ({len(results['candidate_skills'])}):\n"
+    report += f"--------------------------------------------------\n"
+    candidate_str = ", ".join(sorted(results['candidate_skills'])).title() if results['candidate_skills'] else "None detected"
+    report += f"{candidate_str}\n\n"
+    
+    report += f"--------------------------------------------------\n"
+    report += f"REQUIRED JOB SKILLS ({len(results['required_skills'])}):\n"
+    report += f"--------------------------------------------------\n"
+    required_str = ", ".join(sorted(results['required_skills'])).title() if results['required_skills'] else "None detected"
+    report += f"{required_str}\n\n"
+    
+    report += f"--------------------------------------------------\n"
+    report += f"IDENTIFIED SKILL GAPS ({len(results['missing_skills'])}):\n"
+    report += f"--------------------------------------------------\n"
+    missing_str = ", ".join(sorted(results['missing_skills'])).title() if results['missing_skills'] else "No gaps identified"
+    report += f"{missing_str}\n\n"
+    
+    report += "==================================================\n"
+    return report
+
+
+def process_resume_screening(uploaded_file, jd_text: str):
     """Main pipeline orchestrator."""
-    # 1. Document Ingestion
-    resume_raw_text = extract_text_from_pdf(uploaded_pdf)
+    # 1. Document Ingestion (PDF or DOCX)
+    resume_raw_text = extract_text_from_file(uploaded_file)
     
     # 2. Preprocessing & Skill Extraction
     resume_clean_text, candidate_skills = preprocess_and_extract_skills(resume_raw_text)

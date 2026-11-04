@@ -1,16 +1,39 @@
+import os
 import streamlit as st
-from analyzer import process_resume_screening
+from analyzer import process_resume_screening, generate_report_text
 
 st.set_page_config(page_title="Resume Screening & Skill Gap Analyzer", layout="wide")
 
 st.title("Intelligent Resume Screening & Skill Gap Analyzer")
-st.write("Upload a candidate resume in PDF format and provide a target job description to obtain contextual match analysis and skill gap reports.")
+st.write("Upload a candidate resume or choose a pre-loaded sample to analyze contextual fit against job requirements.")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("1. Upload Candidate Resume")
-    uploaded_resume = st.file_uploader("Choose a PDF file", type=["pdf"])
+    st.subheader("1. Candidate Resume")
+    
+    input_mode = st.radio(
+        "Choose Resume Source:", 
+        ["Upload File (PDF/DOCX)", "Use Pre-loaded Sample Resume"]
+    )
+    
+    uploaded_resume = None
+    
+    if input_mode == "Upload File (PDF/DOCX)":
+        uploaded_resume = st.file_uploader("Choose a PDF or DOCX file", type=["pdf", "docx"])
+    else:
+        sample_dir = "sample_resumes"
+        if os.path.exists(sample_dir) and os.listdir(sample_dir):
+            sample_files = [f for f in os.listdir(sample_dir) if f.endswith(('.pdf', '.docx'))]
+            if sample_files:
+                selected_sample = st.selectbox("Select a Sample Resume:", sample_files)
+                sample_path = os.path.join(sample_dir, selected_sample)
+                uploaded_resume = open(sample_path, "rb")
+                st.info(f"Loaded: `{selected_sample}`")
+            else:
+                st.error("No .pdf or .docx files found in `sample_resumes/` folder.")
+        else:
+            st.error("The `sample_resumes/` folder was not found.")
 
 with col2:
     st.subheader("2. Job Description (JD)")
@@ -18,7 +41,7 @@ with col2:
 
 if st.button("Run Screening Analysis", type="primary"):
     if not uploaded_resume:
-        st.warning("Please upload a PDF resume before proceeding.")
+        st.warning("Please upload or select a resume before proceeding.")
     elif not job_description.strip():
         st.warning("Please enter a job description before proceeding.")
     else:
@@ -55,3 +78,15 @@ if st.button("Run Screening Analysis", type="primary"):
                 st.warning(f"**Missing Qualifications / Skills to Acquire:** {', '.join(sorted(results['missing_skills'])).title()}")
             else:
                 st.info("No critical technical skill gaps identified based on the extracted job requirements!")
+
+            # Export Report Download Button
+            st.divider()
+            file_display_name = os.path.basename(uploaded_resume.name)
+            report_data = generate_report_text(results, file_display_name)
+            
+            st.download_button(
+                label="📥 Download Summary Report (.txt)",
+                data=report_data,
+                file_name=f"Screening_Report_{file_display_name.split('.')[0]}.txt",
+                mime="text/plain"
+            )
